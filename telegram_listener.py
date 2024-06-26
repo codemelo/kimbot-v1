@@ -3,7 +3,7 @@ from dotenv import load_dotenv
 from telethon import TelegramClient, events
 import logging
 import asyncio
-
+from message_processor import process_message
 # Load environment variables from .env file
 load_dotenv()
 
@@ -50,8 +50,17 @@ async def start_telegram_listener():
             logging.warning(f"Connection error: {e}. Reconnecting in 5 seconds...")
             await asyncio.sleep(5)  # Wait for 5 seconds before reconnecting
 
-def process_message(message: str, channel) -> None:
-    print(f"Processed message from {channel.title}: {message}")
+async def get_channels_with_substring(substring):
+    await client.start(phone_number)
+    
+    # Get all dialogs (conversations)
+    dialogs = await client.get_dialogs()
+    
+    # Filter channels with the given substring
+    channels = [dialog for dialog in dialogs if dialog.is_channel and substring.lower() in dialog.title.lower()]
+    
+    for channel in channels:
+        print(f'Channel: {channel.title} (ID: {channel.id})')
 
 # Make the client accessible from other modules
 telegram_client = client
