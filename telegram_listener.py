@@ -72,6 +72,7 @@ async def filter_past_messages(substring):
         channel = await client.get_entity(channel_id)
         channels.append(channel)
 
+    problematic_messages = []
     # Filter past messages for each channel
     for c in channels:
         async for m in client.iter_messages(c):
@@ -80,7 +81,11 @@ async def filter_past_messages(substring):
                 try:
                     process_message(m.message)
                 except ValueError as e:
-                    print(f'Error processing message: {m.message}. Error: {e}')
+                    print(f'Error: {e}')
+                    problematic_messages.append(m)
+                except IndexError as e:
+                    problematic_messages.append(m)
+
 
 # Make the client accessible from other modules
 telegram_client = client
