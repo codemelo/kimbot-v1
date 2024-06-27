@@ -1,14 +1,14 @@
 import re
 
-def process_message(message: str, channel) -> None:
-    print(f"Received message from {channel.title}: {message}")
+def process_message(message):
+    #print(f"Received message from {channel.title}: {message}")
     
     if not message.startswith('INFORMATION'):
         print("INVALID MESSAGE")
         return
     
     # Extract the main information
-    info_pattern = re.compile(r"INFORMATION: (LONG|SHORT) (\w+) on (\w+) exchange using (X\d+) Leverage with (\d+%) of your deposit")
+    info_pattern = re.compile(r"INFORMATION: (LONG|SHORT) (\w+) on (\w+) exchange using (\D*\d+\D*) Leverage with (\d+%) of your deposit")
     info_match = info_pattern.search(message)
 
     if info_match:
@@ -39,6 +39,7 @@ def process_message(message: str, channel) -> None:
         raise ValueError("Failed to extract stop loss")
 
     # Print extracted information
+    print("---------------------------------------------------------------------------------------------")
     print(f"Position: {position}")
     print(f"Pair: {pair}")
     print(f"Exchange: {exchange}")

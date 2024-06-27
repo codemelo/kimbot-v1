@@ -4,6 +4,7 @@ from telethon import TelegramClient, events
 import logging
 import asyncio
 from message_processor import process_message
+
 # Load environment variables from .env file
 load_dotenv()
 
@@ -42,7 +43,7 @@ async def start_telegram_listener():
                 @client.on(events.NewMessage(chats=channel))
                 async def handler(event):
                     message = event.message.message
-                    process_message(message, channel)
+                    process_message(message)
 
             print('Listening for new messages...')
             await client.run_until_disconnected()
@@ -61,6 +62,25 @@ async def get_channels_with_substring(substring):
     
     for channel in channels:
         print(f'Channel: {channel.title} (ID: {channel.id})')
+
+async def filter_past_messages(substring):
+    await client.start(phone_number)
+
+    # Get the channel entities using channel IDs
+    channels = []
+    for channel_id in channel_ids:
+        channel = await client.get_entity(channel_id)
+        channels.append(channel)
+
+    # Filter past messages for each channel
+    for c in channels:
+        async for m in client.iter_messages(c):
+            if m.message is not None and m.message.startswith(substring):
+                #print(f'Channel: {channel.title}, Message: {m.message}')
+                try:
+                    process_message(m.message)
+                except ValueError as e:
+                    print(f'Error processing message: {m.message}. Error: {e}')
 
 # Make the client accessible from other modules
 telegram_client = client
