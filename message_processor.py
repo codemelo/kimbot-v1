@@ -1,3 +1,5 @@
+from bybit_client import get_available_symbols, is_valid_symbol
+
 def process_message(message):
     #print(f"Received message from {channel.title}: {message}")
     
@@ -36,11 +38,12 @@ def process_message(message):
         
 
     errors = []
+    available_bybit_symbols = get_available_symbols()
     # Check if any of the variables are None
     if position_type is None:
         errors.append("position_type is None")
-    if symbol is None:
-        errors.append("symbol is None")
+    if symbol is None or not is_valid_symbol(symbol, available_bybit_symbols):
+        errors.append("symbol is not valid")
     if leverage is None:
         errors.append("leverage is None")
     if deposit_percentage is None:
