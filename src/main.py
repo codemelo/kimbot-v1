@@ -13,11 +13,11 @@ async def main():
     load_dotenv()
     bybit = setup_bybit()
     msg = MessageHandler(bybit)
-    tg = setup_telegram(msg)
+    tg = await setup_telegram(msg)
 
-    channel_ids = os.getenv('TELEGRAM_CHANNEL_IDS').split(',')  # Split comma-separated channel IDs
-    channel_ids = [int(channel_id) for channel_id in channel_ids]  # Convert to list of integers
-    await tg.start_telegram_listener(channel_ids)
+    await tg.filter_past_messages('INFORMATION')
+
+    # await tg.start_telegram_listener(channel_ids)
 
 
 def setup_bybit():
@@ -28,12 +28,15 @@ def setup_bybit():
     return bybit
 
 
-def setup_telegram(message_handler):
+async def setup_telegram(message_handler):
     tg_api_id = os.getenv('TELEGRAM_API_ID')
     tg_api_hash = os.getenv('TELEGRAM_API_HASH')
     phone_number = os.getenv('TELEGRAM_PHONE_NUMBER')
 
     tg = TelegramClient(tg_api_id, tg_api_hash, phone_number, message_handler)
+    channel_ids = os.getenv('TELEGRAM_CHANNEL_IDS').split(',')  # Split comma-separated channel IDs
+    channel_ids = [int(channel_id) for channel_id in channel_ids]  # Convert to list of integers
+    await tg.set_channels_by_id(channel_ids)
     return tg
 
 
