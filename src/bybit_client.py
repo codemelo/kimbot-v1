@@ -26,3 +26,13 @@ class BybitClient:
         else:
             return False
 
+    def search_symbols_by_substring(self, substring):
+        if self.symbols is None:
+            self.symbols = self.get_symbols()
+
+        matches = []
+        for s in self.symbols:
+            if substring in s:
+                matches.append(s)
+
+        return matches

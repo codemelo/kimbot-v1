@@ -70,17 +70,29 @@ def extract_num_str(s):
         return None
 
 
-def get_symbol(message):
+def get_symbol_from_msg(message):
     # Extract the substring starting from 'INFORMATION' to 'deposit'
     start = message.find("INFORMATION")
     end = message.find("deposit") + len("deposit")
     substring = message[start:end]  # Extracted substring
     substrings = substring.split()  # Separate the substrings by using whitespace as the delimiter
     symbol = substrings[2]
-    if symbol == 'TEST':
-        x = 0
 
     return symbol
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     # # Extract entry range
     # entry_pattern = re.compile(r"ENTRY BETWEEN: \$?([\d.]+) - \$?([\d.]+)")

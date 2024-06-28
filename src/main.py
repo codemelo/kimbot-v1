@@ -1,9 +1,9 @@
 import asyncio
+import os
+from dotenv import load_dotenv
 from telegram_client import TelegramClient
 from bybit_client import BybitClient
 from message_handler import MessageHandler
-import os
-from dotenv import load_dotenv
 
 
 async def main():
@@ -15,9 +15,9 @@ async def main():
     msg = MessageHandler(bybit)
     tg = await setup_telegram(msg)
 
-    await tg.filter_past_messages('INFORMATION')
+    # await tg.filter_past_messages('INFORMATION')
 
-    # await tg.start_telegram_listener(channel_ids)
+    # await tg.start_telegram_listener()
 
 
 def setup_bybit():
