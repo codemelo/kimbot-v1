@@ -4,8 +4,7 @@ class TradeInfo:
         self._symbol = None
         self._leverage = None
         self._deposit_percentage = None
-        self._entry_low = None
-        self._entry_high = None
+        self._entry_range = None
         self._target_points = None
         self._stop_loss = None
 
@@ -53,23 +52,24 @@ class TradeInfo:
 
     @property
     def entry_low(self):
-        return self._entry_low
-
-    @entry_low.setter
-    def entry_low(self, value):
-        if not isinstance(value, (int, float)):
-            raise ValueError("entry_low must be a number")
-        self._entry_low = value
+        return self._entry_range[0]
 
     @property
     def entry_high(self):
-        return self._entry_high
+        return self._entry_range[1]
 
-    @entry_high.setter
-    def entry_high(self, value):
-        if not isinstance(value, (int, float)):
-            raise ValueError("entry_high must be a number")
-        self._entry_high = value
+    @property
+    def entry_range(self):
+        return self._entry_range
+
+    @entry_range.setter
+    def entry_range(self, value):
+        if isinstance(value, tuple) and len(value) == 2 and isinstance(value[0], float) and isinstance(value[1], float):
+            if value[0] > value[1]:
+                raise ValueError("First value must be less than second value in entry_range tuple")
+            self._entry_range = value
+        else:
+            raise ValueError("entry_range must be a tuple with two float elements")
 
     @property
     def target_points(self):

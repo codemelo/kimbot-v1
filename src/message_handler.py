@@ -50,12 +50,10 @@ class MessageHandler:
         entry_values_str = entry_between_str.split(":")[1].strip()
         entry_values_str = entry_values_str.replace("$", "").replace(" ", "")
         entry_values = entry_values_str.split("-")
-        entry_start = float(entry_values[0])
-        entry_end = float(entry_values[1])
+        entry_low = float(entry_values[0])
+        entry_high = float(entry_values[1])
 
-        # Print the extracted values
-        print("ENTRY BETWEEN Start Value:", entry_start)
-        print("ENTRY BETWEEN End Value:", entry_end)
+        trade_info.entry_range = (entry_low, entry_high)
 
 
 def extract_num_str(s):
