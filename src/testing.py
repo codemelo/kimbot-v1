@@ -27,12 +27,16 @@ async def main():
 
 async def backtest_past_messages(tg, msg):
     messages = await tg.get_past_messages("INFORMATION")
+    trades = []
     errors = []
     for m in messages:
         try:
-            msg.process_message(m)
+            trade = msg.process_message(m)
+            trades.append(trade)
         except Exception as e:
             errors.append(e)
+
+    x = 0
 
 
 def setup_bybit():

@@ -12,8 +12,8 @@ class MessageHandler:
 
         trade_info = TradeInfo()
         self._extract_main_info(msg_str, trade_info)
-
         self._extract_entry_range(msg_str, trade_info)
+        return trade_info
 
     def _extract_main_info(self, msg_str, trade_info):
         # Extract the substring starting from 'INFORMATION' to 'deposit'
@@ -22,31 +22,19 @@ class MessageHandler:
         substring = msg_str[start:end]  # Extracted substring
         substrings = substring.split()  # Separate the substrings by using whitespace as the delimiter
 
-        position_type = None
-        symbol = substrings[2]
-        leverage = None
-        deposit_percentage = None
-
+        trade_info.symbol = substrings[2]
         for i, s in enumerate(substrings):
-            if s in ['SHORT', 'LONG']:
-                position_type = s
-            elif 0 < i < len(substrings) - 1 and substrings[i - 1] == 'using' and substrings[i + 1] == 'Leverage':
+            if s.upper() in ['SHORT', 'LONG']:
+                trade_info.position_type = s.upper()
+            elif (0 < i < len(substrings) - 1
+                  and substrings[i - 1].lower() == 'using' and substrings[i + 1].lower() == 'leverage'):
                 num_str = extract_num_str(s)
                 if num_str is not None and num_str in s:
-                    leverage = num_str
+                    trade_info.leverage = num_str
             elif '%' in s:
                 num_str = extract_num_str(s)
                 if num_str is not None and num_str in s:
-                    deposit_percentage = num_str
-
-        trade_info.update(
-            position_type=position_type,
-            symbol=symbol,
-            leverage=leverage,
-            deposit_percentage=deposit_percentage
-        )
-
-        self._validate_trade_info(trade_info)
+                    trade_info.deposit_percentage = num_str
 
     def _extract_entry_range(self, msg_str, trade_info):
         # Step 1: Find the start index of "ENTRY BETWEEN"
@@ -68,35 +56,6 @@ class MessageHandler:
         # Print the extracted values
         print("ENTRY BETWEEN Start Value:", entry_start)
         print("ENTRY BETWEEN End Value:", entry_end)
-
-    def _validate_trade_info(self, trade_info):
-        errors = []
-        # Check if any of the variables are None
-        if trade_info.position_type is None or trade_info.position_type == '':
-            errors.append("position_type is None")
-        if trade_info.symbol is None or trade_info.symbol == '':
-            errors.append("symbol is None")
-        if trade_info.leverage is None or trade_info.leverage == '':
-            errors.append("leverage is None")
-        if trade_info.deposit_percentage is None or trade_info.deposit_percentage == '':
-            errors.append("deposit_percentage is None")
-
-        # Check if position_type is either 'SHORT' or 'LONG'
-        if trade_info.position_type not in ['SHORT', 'LONG']:
-            errors.append(f"position_type {trade_info.position_type} is not 'SHORT' or 'LONG'")
-        if trade_info.symbol.endswith('USD'):
-            trade_info.symbol += 'T'  # Convert inverse pair to USDT Perp
-        if not self.bybit.is_valid_symbol(trade_info.symbol):
-            errors.append(f"Symbol {trade_info.symbol} does not exist for trading on bybit")
-        if not trade_info.leverage.isdigit():
-            errors.append(f"leverage {trade_info.leverage} is not a digit")
-        if not trade_info.deposit_percentage.isdigit():
-            errors.append(f"Deposit percentage {trade_info.deposit_percentage} is not a digit")
-
-        if errors:
-            raise ValueError("Validation errors: " + ", ".join(errors))
-
-        return True
 
 
 def extract_num_str(s):
