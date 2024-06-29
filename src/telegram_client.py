@@ -1,6 +1,5 @@
 from telethon import TelegramClient as TelethonClient, events
 import asyncio
-from message_handler import get_symbol_from_msg
 
 
 class TelegramClient:
@@ -63,47 +62,33 @@ class TelegramClient:
         for channel in channels:
             print(f'Channel: {channel.title} (ID: {channel.id})')
 
-    async def filter_past_messages(self, startswith_str):
+    async def get_past_messages(self, startswith_str):
         await self.client.start(self.phone)
 
-        problematic_messages = []
-        symbols = []
-        # Filter past messages for each channel
+        messages = []
+        # Get past messages for each channel
         for c in self.channels:
             async for m in self.client.iter_messages(c):
                 if m.message is not None and m.message.startswith(startswith_str):
-                    try:
-                        # self.msg.process_message(m.message)
-                        symbols.append(get_symbol_from_msg(m.message))
-                    except ValueError as e:
-                        print(f'Error: {e}')
-                        problematic_messages.append(m)
-                    except IndexError as e:
-                        problematic_messages.append(m)
+                    messages.append(m.message)
+                    print("Retrieved message...")
 
-        print("------------------------------------------------------------------------------")
-        print("PROBLEMATIC")
-        for m in problematic_messages:
-            print("------------------------------------------------------------------------------")
-            print(m.message)
+        return messages
 
-        print("------------------------------------------------------------------------------")
-        print("Unique Symbols")
-
-    async def get_traded_symbols_from_channels(self):
-        errors = []
-        symbols = []
-        for c in self.channels:
-            async for m in self.client.iter_messages(c):
-                if m.message is not None and m.message.startswith('INFORMATION'):
-                    try:
-                        symbols.append(get_symbol_from_msg(m.message))
-                        print("symbol found")
-                    except Exception as e:
-                        errors.append(e)
-
-        if errors:
-            for e in errors:
-                print(e)
-
-        return list(set(symbols))
+    # async def get_traded_symbols_from_channels(self):
+    #     errors = []
+    #     symbols = []
+    #     for c in self.channels:
+    #         async for m in self.client.iter_messages(c):
+    #             if m.message is not None and m.message.startswith('INFORMATION'):
+    #                 try:
+    #                     symbols.append(get_symbol_from_msg(m.message))
+    #                     print("symbol found")
+    #                 except Exception as e:
+    #                     errors.append(e)
+    #
+    #     if errors:
+    #         for e in errors:
+    #             print(e)
+    #
+    #     return list(set(symbols))

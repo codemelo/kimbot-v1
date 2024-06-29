@@ -15,33 +15,24 @@ async def main():
     msg = MessageHandler(bybit)
     tg = await setup_telegram(msg)
 
-    # matches = bybit.search_symbols_by_substring("FET")
+    # matches = bybit.search_symbols_by_substring(".")
     # print(matches)
-
-    await get_traded_symbols_from_channels(bybit, tg)
 
     # await tg.filter_past_messages('INFORMATION')
 
     # await tg.start_telegram_listener()
 
+    await backtest_past_messages(tg, msg)
 
-async def get_traded_symbols_from_channels(bybit, tg):
-    traded_symbols = await tg.get_traded_symbols_from_channels()
-    valid = []
-    invalid = []
-    for s in traded_symbols:
-        if bybit.is_valid_symbol(s):
-            valid.append(s)
-        else:
-            invalid.append(s)
 
-    # TODO match valid invalid symbols
-
-    print(f"{len(valid)} valid symbols found:")
-    print(valid)
-
-    print(f"\n{len(invalid)} invalid symbols found:")
-    print(invalid)
+async def backtest_past_messages(tg, msg):
+    messages = await tg.get_past_messages("INFORMATION")
+    errors = []
+    for m in messages:
+        try:
+            msg.process_message(m)
+        except Exception as e:
+            errors.append(e)
 
 
 def setup_bybit():

@@ -34,8 +34,8 @@ class MessageHandler:
         # Check if any of the variables are None
         if position_type is None:
             errors.append("position_type is None")
-        if symbol is None or not self.bybit.is_valid_symbol(symbol):
-            errors.append("symbol is not valid")
+        if symbol is None:
+            errors.append("symbol is None")
         if leverage is None:
             errors.append("leverage is None")
         if deposit_percentage is None:
@@ -43,7 +43,15 @@ class MessageHandler:
 
         # Check if position_type is either 'SHORT' or 'LONG'
         if position_type not in ['SHORT', 'LONG']:
-            errors.append("position_type is not 'SHORT' or 'LONG'")
+            errors.append(f"position_type {position_type} is not 'SHORT' or 'LONG'")
+        if symbol.endswith('USD'):
+            symbol += 'T'  # Convert inverse pair to USDT Perp
+        if not self.bybit.is_valid_symbol(symbol):
+            errors.append(f"symbol {symbol} does not exist for trading on bybit")
+        if not leverage.isdigit():
+            errors.append(f"leverage {leverage} is not a digit")
+        if not deposit_percentage.isdigit():
+            errors.append(f"Deposit percentage {deposit_percentage} is not a digit")
 
         if errors:
             raise ValueError("Validation errors: " + ", ".join(errors))
@@ -53,7 +61,7 @@ class MessageHandler:
         print(f"Position: {position_type}")
         print(f"Symbol: {symbol}")
         print(f"Leverage: {leverage}")
-        print(f"Percentage: {deposit_percentage}")
+        print(f"Deposit percentage: {deposit_percentage}")
 
 
 def extract_num_str(s):
@@ -68,18 +76,6 @@ def extract_num_str(s):
         return num_str
     else:
         return None
-
-
-def get_symbol_from_msg(message):
-    # Extract the substring starting from 'INFORMATION' to 'deposit'
-    start = message.find("INFORMATION")
-    end = message.find("deposit") + len("deposit")
-    substring = message[start:end]  # Extracted substring
-    substrings = substring.split()  # Separate the substrings by using whitespace as the delimiter
-    symbol = substrings[2]
-
-    return symbol
-
 
 
 

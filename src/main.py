@@ -17,7 +17,7 @@ async def main():
 
     # await tg.filter_past_messages('INFORMATION')
 
-    # await tg.start_telegram_listener()
+    await tg.start_telegram_listener()
 
 
 def setup_bybit():
