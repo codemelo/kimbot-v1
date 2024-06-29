@@ -13,6 +13,8 @@ class MessageHandler:
         trade_info = TradeInfo()
         self._extract_main_info(msg_str, trade_info)
 
+        self._extract_entry_range(msg_str, trade_info)
+
     def _extract_main_info(self, msg_str, trade_info):
         # Extract the substring starting from 'INFORMATION' to 'deposit'
         start = msg_str.find("INFORMATION")
@@ -45,6 +47,27 @@ class MessageHandler:
         )
 
         self._validate_trade_info(trade_info)
+
+    def _extract_entry_range(self, msg_str, trade_info):
+        # Step 1: Find the start index of "ENTRY BETWEEN"
+        start = msg_str.find("ENTRY BETWEEN")
+
+        # Step 2: Find the end index of the line
+        end = msg_str.find("\n", start)
+
+        # Step 3: Extract the substring containing "ENTRY BETWEEN" values
+        entry_between_str = msg_str[start:end]
+
+        # Step 4: Extract the values after "ENTRY BETWEEN:"
+        entry_values_str = entry_between_str.split(":")[1].strip()
+        entry_values_str = entry_values_str.replace("$", "").replace(" ", "")
+        entry_values = entry_values_str.split("-")
+        entry_start = float(entry_values[0])
+        entry_end = float(entry_values[1])
+
+        # Print the extracted values
+        print("ENTRY BETWEEN Start Value:", entry_start)
+        print("ENTRY BETWEEN End Value:", entry_end)
 
     def _validate_trade_info(self, trade_info):
         errors = []

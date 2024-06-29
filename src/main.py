@@ -15,8 +15,6 @@ async def main():
     msg = MessageHandler(bybit)
     tg = await setup_telegram(msg)
 
-    # await tg.filter_past_messages('INFORMATION')
-
     await tg.start_telegram_listener()
 
 
