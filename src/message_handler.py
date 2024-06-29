@@ -1,16 +1,23 @@
+from models.trade_info import TradeInfo
+
+
 class MessageHandler:
     def __init__(self, bybit_client):
         self.bybit = bybit_client
 
-    def process_message(self, msg):
-        if not msg.startswith('INFORMATION'):
+    def process_message(self, msg_str):
+        if not msg_str.startswith('INFORMATION'):
             print("INVALID MESSAGE")
             return
 
+        trade_info = TradeInfo()
+        self._extract_main_info(msg_str, trade_info)
+
+    def _extract_main_info(self, msg_str, trade_info):
         # Extract the substring starting from 'INFORMATION' to 'deposit'
-        start = msg.find("INFORMATION")
-        end = msg.find("deposit") + len("deposit")
-        substring = msg[start:end]  # Extracted substring
+        start = msg_str.find("INFORMATION")
+        end = msg_str.find("deposit") + len("deposit")
+        substring = msg_str[start:end]  # Extracted substring
         substrings = substring.split()  # Separate the substrings by using whitespace as the delimiter
 
         position_type = None
@@ -19,7 +26,7 @@ class MessageHandler:
         deposit_percentage = None
 
         for i, s in enumerate(substrings):
-            if s == 'SHORT' or s == 'LONG':  # Position type
+            if s in ['SHORT', 'LONG']:
                 position_type = s
             elif 0 < i < len(substrings) - 1 and substrings[i - 1] == 'using' and substrings[i + 1] == 'Leverage':
                 num_str = extract_num_str(s)
@@ -30,38 +37,43 @@ class MessageHandler:
                 if num_str is not None and num_str in s:
                     deposit_percentage = num_str
 
+        trade_info.update(
+            position_type=position_type,
+            symbol=symbol,
+            leverage=leverage,
+            deposit_percentage=deposit_percentage
+        )
+
+        self._validate_trade_info(trade_info)
+
+    def _validate_trade_info(self, trade_info):
         errors = []
         # Check if any of the variables are None
-        if position_type is None:
+        if trade_info.position_type is None or trade_info.position_type == '':
             errors.append("position_type is None")
-        if symbol is None:
+        if trade_info.symbol is None or trade_info.symbol == '':
             errors.append("symbol is None")
-        if leverage is None:
+        if trade_info.leverage is None or trade_info.leverage == '':
             errors.append("leverage is None")
-        if deposit_percentage is None:
+        if trade_info.deposit_percentage is None or trade_info.deposit_percentage == '':
             errors.append("deposit_percentage is None")
 
         # Check if position_type is either 'SHORT' or 'LONG'
-        if position_type not in ['SHORT', 'LONG']:
-            errors.append(f"position_type {position_type} is not 'SHORT' or 'LONG'")
-        if symbol.endswith('USD'):
-            symbol += 'T'  # Convert inverse pair to USDT Perp
-        if not self.bybit.is_valid_symbol(symbol):
-            errors.append(f"symbol {symbol} does not exist for trading on bybit")
-        if not leverage.isdigit():
-            errors.append(f"leverage {leverage} is not a digit")
-        if not deposit_percentage.isdigit():
-            errors.append(f"Deposit percentage {deposit_percentage} is not a digit")
+        if trade_info.position_type not in ['SHORT', 'LONG']:
+            errors.append(f"position_type {trade_info.position_type} is not 'SHORT' or 'LONG'")
+        if trade_info.symbol.endswith('USD'):
+            trade_info.symbol += 'T'  # Convert inverse pair to USDT Perp
+        if not self.bybit.is_valid_symbol(trade_info.symbol):
+            errors.append(f"Symbol {trade_info.symbol} does not exist for trading on bybit")
+        if not trade_info.leverage.isdigit():
+            errors.append(f"leverage {trade_info.leverage} is not a digit")
+        if not trade_info.deposit_percentage.isdigit():
+            errors.append(f"Deposit percentage {trade_info.deposit_percentage} is not a digit")
 
         if errors:
             raise ValueError("Validation errors: " + ", ".join(errors))
 
-        # Print extracted information
-        print("---------------------------------------------------------------------------------------------")
-        print(f"Position: {position_type}")
-        print(f"Symbol: {symbol}")
-        print(f"Leverage: {leverage}")
-        print(f"Deposit percentage: {deposit_percentage}")
+        return True
 
 
 def extract_num_str(s):
@@ -76,19 +88,6 @@ def extract_num_str(s):
         return num_str
     else:
         return None
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     # # Extract entry range
     # entry_pattern = re.compile(r"ENTRY BETWEEN: \$?([\d.]+) - \$?([\d.]+)")
@@ -114,7 +113,7 @@ def extract_num_str(s):
 
     # Print extracted information
     # print("---------------------------------------------------------------------------------------------")
-    # print(f"Position: {position}")
+    # print(f"TradeInfo: {position}")
     # print(f"Pair: {pair}")
     # print(f"Exchange: {exchange}")
     # print(f"Leverage: {leverage}")
