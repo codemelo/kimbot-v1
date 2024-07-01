@@ -13,6 +13,7 @@ class MessageHandler:
         trade_info = TradeInfo()
         self._extract_main_info(msg_str, trade_info)
         self._extract_entry_range(msg_str, trade_info)
+        self._extract_target_points(msg_str, trade_info)
         return trade_info
 
     def _extract_main_info(self, msg_str, trade_info):
@@ -54,6 +55,30 @@ class MessageHandler:
         entry_high = float(entry_values[1])
 
         trade_info.entry_range = (entry_low, entry_high)
+
+    def _extract_target_points(self, msg_str, trade_info):
+        # Step 1: Find the start index of "TARGET POINTS"
+        start = msg_str.find("TARGET POINTS:")
+
+        # Step 2: Find the end index of the section (next section or end of string)
+        stop_loss_start = msg_str.find("STOP LOSS", start)
+        end = stop_loss_start if stop_loss_start != -1 else len(msg_str)
+
+        # Step 3: Extract the substring containing "TARGET POINTS" values
+        target_points_str = msg_str[start:end].strip()
+
+        # Step 4: Split the lines containing target points
+        lines = target_points_str.split("\n")
+
+        # Step 5: Iterate over the lines and extract the target points
+        for line in lines:
+            if ')' in line and '-' in line:
+                parts = line.split(')')
+                price_part = parts[1].split('-')[0].strip().replace("$", "")
+                percentage_part = parts[1].split('-')[1].strip().replace("%", "")
+                price = float(price_part)
+                percentage = int(percentage_part)
+                trade_info.add_target_point(price, percentage)
 
 
 def extract_num_str(s):

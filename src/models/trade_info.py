@@ -5,7 +5,7 @@ class TradeInfo:
         self._leverage = None
         self._deposit_percentage = None
         self._entry_range = None
-        self._target_points = None
+        self._target_points = []
         self._stop_loss = None
 
     @property
@@ -75,11 +75,9 @@ class TradeInfo:
     def target_points(self):
         return self._target_points
 
-    @target_points.setter
-    def target_points(self, value):
-        if not isinstance(value, (int, float)):
-            raise ValueError("target_points must be a number")
-        self._target_points = value
+    def add_target_point(self, price: float, percentage: float):
+        tp = TargetPoint(price, percentage)
+        self.target_points.append(tp)
 
     @property
     def stop_loss(self):
@@ -90,3 +88,9 @@ class TradeInfo:
         if not isinstance(value, (int, float)):
             raise ValueError("stop_loss must be a number")
         self._stop_loss = value
+
+
+class TargetPoint:
+    def __init__(self, price: float, percentage: float):
+        self.price = float(price)
+        self.percentage = float(percentage)
