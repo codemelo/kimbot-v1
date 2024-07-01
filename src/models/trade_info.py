@@ -85,8 +85,8 @@ class TradeInfo:
 
     @stop_loss.setter
     def stop_loss(self, value):
-        if not isinstance(value, (int, float)):
-            raise ValueError("stop_loss must be a number")
+        if not isinstance(value, float):
+            raise ValueError("stop_loss must be a float")
         self._stop_loss = value
 
 

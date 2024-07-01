@@ -14,6 +14,7 @@ class MessageHandler:
         self._extract_main_info(msg_str, trade_info)
         self._extract_entry_range(msg_str, trade_info)
         self._extract_target_points(msg_str, trade_info)
+        self._extract_stop_loss(msg_str, trade_info)
         return trade_info
 
     def _extract_main_info(self, msg_str, trade_info):
@@ -79,6 +80,25 @@ class MessageHandler:
                 price = float(price_part)
                 percentage = int(percentage_part)
                 trade_info.add_target_point(price, percentage)
+
+    def _extract_stop_loss(self, msg_str, trade_info):
+        # Step 1: Find the start index of "STOP LOSS"
+        start = msg_str.find("STOP LOSS:")
+
+        # Step 2: Find the end index of the line
+        end = msg_str.find("\n", start)
+        if end == -1:  # In case "STOP LOSS" is at the end of the string without a newline character
+            end = len(msg_str)
+
+        # Step 3: Extract the substring containing "STOP LOSS" value
+        stop_loss_str = msg_str[start:end]
+
+        # Step 4: Extract the value after "STOP LOSS:"
+        stop_loss_value_str = stop_loss_str.split(":")[1].strip()
+        stop_loss_value_str = stop_loss_value_str.replace("$", "").replace(" ", "")
+        stop_loss_value = float(stop_loss_value_str)
+
+        trade_info.stop_loss = stop_loss_value
 
 
 def extract_num_str(s):
