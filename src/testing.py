@@ -22,7 +22,8 @@ async def main():
 
     # await tg.start_telegram_listener()
 
-    await backtest_past_messages(tg, msg)
+    trades = await backtest_past_messages(tg, msg)
+    check_validation(trades)
 
 
 async def backtest_past_messages(tg, msg):
@@ -35,8 +36,7 @@ async def backtest_past_messages(tg, msg):
             trades.append(trade)
         except Exception as e:
             errors.append(e)
-
-    x = 0
+    return trades
 
 
 def setup_bybit():
@@ -57,6 +57,45 @@ async def setup_telegram(message_handler):
     channel_ids = [int(channel_id) for channel_id in channel_ids]  # Convert to list of integers
     await tg.set_channels_by_id(channel_ids)
     return tg
+
+
+def check_validation(trades):
+    errors = []
+
+    for i, trade in enumerate(trades):
+        if trade.position_type not in ["LONG", "SHORT"]:
+            errors.append(f"Trade {i}: Invalid position_type '{trade.position_type}'. Must be 'LONG' or 'SHORT'.")
+        if not isinstance(trade.deposit_percentage, (int, float)) or not (0 < trade.deposit_percentage <= 10):
+            errors.append(f"Trade {i}: Invalid deposit_percentage '{trade.deposit_percentage}'. Must be a positive int or float no larger than 10.")
+        if not isinstance(trade.leverage, (int, float)) or trade.leverage <= 0:
+            errors.append(f"Trade {i}: Invalid leverage '{trade.leverage}'. Must be a positive int or float.")
+        if trade.entry_range is None or not isinstance(trade.entry_low, float) or trade.entry_low <= 0:
+            errors.append(f"Trade {i}: Invalid entry_low '{trade.entry_low}'. Must be a positive float.")
+        if trade.entry_range is None or not isinstance(trade.entry_high, float) or trade.entry_high <= 0:
+            errors.append(f"Trade {i}: Invalid entry_high '{trade.entry_high}'. Must be a positive float.")
+        if trade.entry_range is None or trade.entry_low >= trade.entry_high:
+            errors.append(f"Trade {i}: entry_low '{trade.entry_low}' must be less than entry_high '{trade.entry_high}'.")
+        if not isinstance(trade.stop_loss, float) or trade.stop_loss <= 0:
+            errors.append(f"Trade {i}: Invalid stop_loss '{trade.stop_loss}'. Must be a positive float.")
+
+        if not trade.target_points:
+            errors.append(f"Trade {i}: target_points is empty or not defined.")
+        else:
+            total_percentage = 0
+            for j, tp in enumerate(trade.target_points):
+                if not isinstance(tp.price, float) or tp.price <= 0:
+                    errors.append(f"Trade {i}, Target Point {j}: Invalid price '{tp.price}'. Must be a positive float.")
+                if not isinstance(tp.percentage, float) or tp.percentage <= 0:
+                    errors.append(f"Trade {i}, Target Point {j}: Invalid percentage '{tp.percentage}'. Must be a positive float.")
+                total_percentage += tp.percentage
+            if total_percentage != 100:
+                errors.append(f"Trade {i}: Target points percentages do not add up to 100. Total is {total_percentage}.")
+
+    if errors:
+        for error in errors:
+            print(error)
+    else:
+        print("All trades are valid.")
 
 
 if __name__ == '__main__':

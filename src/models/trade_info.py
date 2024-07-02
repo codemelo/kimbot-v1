@@ -8,6 +8,17 @@ class TradeInfo:
         self._target_points = []
         self._stop_loss = None
 
+    def __str__(self):
+        target_points_str = "\n".join([f"{i+1}) ${tp.price} - {tp.percentage}%" for i, tp in enumerate(self.target_points)])
+        entry_range_str = f"${self.entry_low} - ${self.entry_high}" if self.entry_range else "N/A"
+        return (f"Position Type: {self.position_type}\n"
+                f"Symbol: {self.symbol}\n"
+                f"Leverage: {self.leverage}x\n"
+                f"Deposit Percentage: {self.deposit_percentage}%\n"
+                f"Entry Range: {entry_range_str}\n"
+                f"Target Points:\n{target_points_str}\n"
+                f"Stop Loss: ${self.stop_loss}")
+
     @property
     def position_type(self):
         return self._position_type
