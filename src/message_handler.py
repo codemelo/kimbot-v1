@@ -15,6 +15,9 @@ class MessageHandler:
         self._extract_entry_range(msg_str, trade_info)
         self._extract_target_points(msg_str, trade_info)
         self._extract_stop_loss(msg_str, trade_info)
+
+        # TODO self.bybit.place_trade(trade_info)
+
         return trade_info
 
     def _extract_main_info(self, msg_str, trade_info):

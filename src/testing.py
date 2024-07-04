@@ -1,6 +1,8 @@
 import asyncio
 import os
 from dotenv import load_dotenv
+
+from src.models.trade_info import TradeInfo, TargetPoint
 from telegram_client import TelegramClient
 from bybit_client import BybitClient
 from message_handler import MessageHandler
@@ -11,7 +13,8 @@ async def main():
     # asyncio.run(filter_past_messages('INFORMATION'))
 
     load_dotenv()
-    bybit = setup_bybit()
+    # bybit = setup_bybit()
+    bybit = setup_bybit_testnet()
     msg = MessageHandler(bybit)
     tg = await setup_telegram(msg)
 
@@ -22,8 +25,24 @@ async def main():
 
     # await tg.start_telegram_listener()
 
-    trades = await backtest_past_messages(tg, msg)
-    check_validation(trades)
+    # trades = await backtest_past_messages(tg, msg)
+    # check_validation(trades)
+
+    t = TradeInfo()
+    t.position_type = "LONG"
+    t.symbol = "BTCUSDT"
+    t.leverage = 50
+    t.deposit_percentage = 10
+    t.entry_range = (61252.0, 61684.0)
+    t.add_target_point(61868, 20)
+    t.add_target_point(61942, 20)
+    t.add_target_point(62041, 24)
+    t.add_target_point(62238, 14)
+    t.add_target_point(62485, 12)
+    t.add_target_point(62731, 10)
+    t.stop_loss = 60390.0
+
+    bybit.place_trade(t)
 
 
 async def backtest_past_messages(tg, msg):
@@ -42,6 +61,14 @@ async def backtest_past_messages(tg, msg):
 def setup_bybit():
     bybit_api_key = os.getenv('BYBIT_API_KEY')
     bybit_api_secret = os.getenv('BYBIT_API_SECRET')
+
+    bybit = BybitClient(bybit_api_key, bybit_api_secret)
+    return bybit
+
+
+def setup_bybit_testnet():
+    bybit_api_key = os.getenv('BYBIT_API_KEY_TESTNET')
+    bybit_api_secret = os.getenv('BYBIT_API_SECRET_TESTNET')
 
     bybit = BybitClient(bybit_api_key, bybit_api_secret)
     return bybit
@@ -66,7 +93,8 @@ def check_validation(trades):
         if trade.position_type not in ["LONG", "SHORT"]:
             errors.append(f"Trade {i}: Invalid position_type '{trade.position_type}'. Must be 'LONG' or 'SHORT'.")
         if not isinstance(trade.deposit_percentage, (int, float)) or not (0 < trade.deposit_percentage <= 10):
-            errors.append(f"Trade {i}: Invalid deposit_percentage '{trade.deposit_percentage}'. Must be a positive int or float no larger than 10.")
+            errors.append(
+                f"Trade {i}: Invalid deposit_percentage '{trade.deposit_percentage}'. Must be a positive int or float no larger than 10.")
         if not isinstance(trade.leverage, (int, float)) or trade.leverage <= 0:
             errors.append(f"Trade {i}: Invalid leverage '{trade.leverage}'. Must be a positive int or float.")
         if trade.entry_range is None or not isinstance(trade.entry_low, float) or trade.entry_low <= 0:
@@ -74,7 +102,8 @@ def check_validation(trades):
         if trade.entry_range is None or not isinstance(trade.entry_high, float) or trade.entry_high <= 0:
             errors.append(f"Trade {i}: Invalid entry_high '{trade.entry_high}'. Must be a positive float.")
         if trade.entry_range is None or trade.entry_low >= trade.entry_high:
-            errors.append(f"Trade {i}: entry_low '{trade.entry_low}' must be less than entry_high '{trade.entry_high}'.")
+            errors.append(
+                f"Trade {i}: entry_low '{trade.entry_low}' must be less than entry_high '{trade.entry_high}'.")
         if not isinstance(trade.stop_loss, float) or trade.stop_loss <= 0:
             errors.append(f"Trade {i}: Invalid stop_loss '{trade.stop_loss}'. Must be a positive float.")
 
@@ -86,10 +115,12 @@ def check_validation(trades):
                 if not isinstance(tp.price, float) or tp.price <= 0:
                     errors.append(f"Trade {i}, Target Point {j}: Invalid price '{tp.price}'. Must be a positive float.")
                 if not isinstance(tp.percentage, float) or tp.percentage <= 0:
-                    errors.append(f"Trade {i}, Target Point {j}: Invalid percentage '{tp.percentage}'. Must be a positive float.")
+                    errors.append(
+                        f"Trade {i}, Target Point {j}: Invalid percentage '{tp.percentage}'. Must be a positive float.")
                 total_percentage += tp.percentage
             if total_percentage != 100:
-                errors.append(f"Trade {i}: Target points percentages do not add up to 100. Total is {total_percentage}.")
+                errors.append(
+                    f"Trade {i}: Target points percentages do not add up to 100. Total is {total_percentage}.")
 
     if errors:
         for error in errors:

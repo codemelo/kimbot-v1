@@ -49,7 +49,7 @@ class TradeInfo:
     def leverage(self, value):
         if not value or int(value) <= 0:
             raise ValueError(f"Value {value} for leverage is not valid. Must be a positive integer")
-        self._leverage = int(value)
+        self._leverage = float(value)
 
     @property
     def deposit_percentage(self):
@@ -59,7 +59,7 @@ class TradeInfo:
     def deposit_percentage(self, value):
         if not value or int(value) <= 0:
             raise ValueError(f"Value {value} for deposit_percentage is not valid. Must be a positive integer")
-        self._deposit_percentage = int(value)
+        self._deposit_percentage = float(value)
 
     @property
     def entry_low(self):
