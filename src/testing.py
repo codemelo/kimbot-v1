@@ -29,19 +29,15 @@ async def main():
     # check_validation(trades)
 
     t = TradeInfo()
-    t.position_type = "LONG"
+    t.position_type = "SHORT"
     t.symbol = "BTCUSDT"
     t.leverage = 50
     t.deposit_percentage = 10
-    t.entry_range = (56600.0, 59000.0)
-    t.add_target_point(61868, 20)
-    t.add_target_point(61942, 20)
-    t.add_target_point(62041, 24)
-    t.add_target_point(62238, 14)
-    t.add_target_point(62485, 12)
-    t.add_target_point(62731, 10)
-    t.stop_loss = 54000.0
+    t.entry_range = (53000.0, 59000.0)
+    t.add_target_point(53000, 100)
+    t.stop_loss = 56000.0
 
+    print(bybit.get_current_price("BTCUSDT"))
     bybit.place_trade(t)
 
 
