@@ -33,14 +33,14 @@ async def main():
     t.symbol = "BTCUSDT"
     t.leverage = 50
     t.deposit_percentage = 10
-    t.entry_range = (61252.0, 61684.0)
+    t.entry_range = (56600.0, 59000.0)
     t.add_target_point(61868, 20)
     t.add_target_point(61942, 20)
     t.add_target_point(62041, 24)
     t.add_target_point(62238, 14)
     t.add_target_point(62485, 12)
     t.add_target_point(62731, 10)
-    t.stop_loss = 60390.0
+    t.stop_loss = 54000.0
 
     bybit.place_trade(t)
 

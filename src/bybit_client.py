@@ -1,5 +1,4 @@
 from pybit.unified_trading import HTTP
-
 from src.models.trade_info import TradeInfo
 
 
@@ -43,14 +42,64 @@ class BybitClient:
         # Calculate order quantity based on deposit percentage
         usdt_balance = self.get_balance("USDT")
         order_value = usdt_balance * (trade_info.deposit_percentage / 100)
-        order_quantity = order_value / current_price
+        order_quantity = round((order_value / current_price), 4)
+
+        # TODO calculate qty properly using qtyStep
+        #  https://stackoverflow.com/questions/76987446/params-error-qty-invalid-errcode-10001-being-returned-by-bybit-api
 
         print(f"Asset: {trade_info.symbol}"
               f"\nOrder quantity: {order_quantity}"
               f"\nOrder price: {order_price}"
               f"\nCurrent Price: {current_price}")
 
-        # TODO place order, take profit targets, stop loss
+        # Determine order side
+        order_side = None
+        if trade_info.position_type == "LONG":
+            order_side = "Buy"
+        elif trade_info.position_type == "SHORT":
+            order_side = "Sell"
+
+        # Place main order
+        main_order = self.session.place_order(
+            category="linear",
+            symbol=trade_info.symbol,
+            side=order_side,
+            orderType="Limit",
+            qty=str(order_quantity),
+            price=str(order_price),
+            timeInForce="GTC",
+            stopLoss=str(trade_info.stop_loss)
+        )
+        print(f"Main order placed: \n{main_order}")
+
+        # Determine order side for take profit
+        tp_side = None
+        if order_side == "Buy":
+            tp_side = "Sell"
+        elif order_side == "Sell":
+            tp_side = "Buy"
+
+        remaining_qty = order_quantity
+        for target in trade_info.target_points:
+            tp_qty = round(order_quantity * (target.percentage / 100), 4)
+            # TODO calculate qty properly using qtyStep
+            remaining_qty -= tp_qty
+
+            tp_order = self.session.place_order(
+                category="linear",
+                symbol=trade_info.symbol,
+                side=tp_side,
+                orderType="Limit",
+                qty=str(tp_qty),
+                price=str(target.price),
+                timeInForce="GTC",
+                triggerBy="LastPrice",
+                reduceOnly=True
+            )
+            print(f"Take profit order placed: \n{tp_order}")
+
+        if remaining_qty > 0:
+            print(f"Warning: Remaining quantity {remaining_qty} not placed in take profit orders")
 
     def get_balance(self, coin):
         response = self.session.get_wallet_balance(
@@ -115,3 +164,4 @@ class BybitClient:
                 matches.append(s)
 
         return matches
+
