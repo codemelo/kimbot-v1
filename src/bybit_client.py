@@ -1,3 +1,4 @@
+import time
 from decimal import Decimal, ROUND_UP
 
 from pybit.unified_trading import HTTP
@@ -78,8 +79,6 @@ class BybitClient:
         elif trade_info.position_type == "SHORT":
             order_side = "Sell"
 
-        take_profit_price = trade_info.target_points[0].price
-
         # Place main order
         main_order = self.session.place_order(
             category="linear",
@@ -89,10 +88,73 @@ class BybitClient:
             qty=str(order_quantity),
             price=str(order_price),
             timeInForce="GTC",
-            stopLoss=str(trade_info.stop_loss),
-            takeProfit=str(take_profit_price)
+            stopLoss=str(trade_info.stop_loss)
         )
+        # TODO if current price is within entry range, market order else limit
+
         print(f"Main order placed: \n{main_order}")
+
+        # Wait for the main order to be filled
+        order_id = main_order['result']['orderId']
+        while True:
+            try:
+                order_status = self.session.get_order_history(
+                    category="linear",
+                    symbol=trade_info.symbol,
+                    orderId=order_id
+                )
+                if order_status['result']['list'][0]['orderStatus'] == 'Filled':
+                    break
+                time.sleep(5)  # Wait for 5 seconds before checking again
+            except IndexError as e:
+                time.sleep(5)
+
+        # Determine order side for take profit
+        tp_side = None
+        if order_side == "Buy":
+            tp_side = "Sell"
+        elif order_side == "Sell":
+            tp_side = "Buy"
+
+        total_tp_quantity = Decimal('0')
+        tp_orders = []
+
+        for i, tp in enumerate(trade_info.target_points):
+            tp_quantity = order_quantity * (Decimal(tp.percentage) / Decimal(100))
+            tp_quantity = tp_quantity.quantize(qty_step, rounding=ROUND_UP)
+
+            if tp_quantity > Decimal('0'):
+                total_tp_quantity += tp_quantity
+                tp_orders.append((tp_quantity, tp.price))
+            else:
+                print(f"Skipping take profit order {i + 1} due to insufficient quantity")
+
+        # Adjust if total exceeds order quantity
+        if total_tp_quantity > order_quantity:
+            excess = total_tp_quantity - order_quantity
+            for i in range(len(tp_orders)):
+                if tp_orders[i][0] > excess:
+                    tp_orders[i] = (tp_orders[i][0] - excess, tp_orders[i][1])
+                    break
+                excess -= tp_orders[i][0]
+                tp_orders[i] = (Decimal('0'), tp_orders[i][1])
+
+        # Place the adjusted take profit orders
+        for i, (tp_quantity, tp_price) in enumerate(tp_orders):
+            if tp_quantity > Decimal('0'):
+                tp_order = self.session.place_order(
+                    category="linear",
+                    symbol=trade_info.symbol,
+                    side=tp_side,
+                    orderType="Limit",
+                    qty=str(tp_quantity),
+                    price=str(tp_price),
+                    timeInForce="GTC",
+                    reduceOnly=True
+                )
+                print(f"Take profit order {i + 1} placed: \n{tp_order}")
+
+        print("All orders placed successfully")
 
     def get_balance(self, coin):
         response = self.session.get_wallet_balance(
