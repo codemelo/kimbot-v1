@@ -60,7 +60,6 @@ async def main():
     bybit.place_trade(t)
 
 
-
 async def backtest_past_messages(tg, msg):
     messages = await tg.get_past_messages("INFORMATION")
     trades = []

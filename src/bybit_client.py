@@ -33,15 +33,6 @@ class BybitClient:
         else:
             print(f"Leverage already set to {trade_info.leverage}")
 
-        # Determine order price based on current price and entry range
-        current_price = self.get_current_price(trade_info.symbol)
-        if current_price < trade_info.entry_low:
-            order_price = trade_info.entry_low
-        elif current_price > trade_info.entry_high:
-            order_price = trade_info.entry_high
-        else:
-            order_price = current_price
-
         # Fetch instrument info to get qtyStep
         instrument_info = self.session.get_instruments_info(
             category="linear",
@@ -66,12 +57,6 @@ class BybitClient:
         # Calculate the actual amount from balance being used
         actual_balance_used = order_quantity * current_price / Decimal(trade_info.leverage)
 
-        print(f"Asset: {trade_info.symbol}"
-              f"\nOrder quantity: {order_quantity}"
-              f"\nOrder price: {order_price}"
-              f"\nCurrent Price: {current_price}")
-        print("\n----------------------------------------------------------------------------------\n")
-
         # Determine order side
         order_side = None
         if trade_info.position_type == "LONG":
@@ -79,22 +64,39 @@ class BybitClient:
         elif trade_info.position_type == "SHORT":
             order_side = "Sell"
 
+        # Determine order price based on current price and entry range
+        current_price = self.get_current_price(trade_info.symbol)
+        if current_price < trade_info.entry_low:
+            order_price = trade_info.entry_low
+            main_order_type = "Limit"
+        elif current_price > trade_info.entry_high:
+            order_price = trade_info.entry_high
+            main_order_type = "Limit"
+        else:
+            order_price = current_price
+            main_order_type = "Market"
+
         # Place main order
         main_order = self.session.place_order(
             category="linear",
             symbol=trade_info.symbol,
             side=order_side,
-            orderType="Limit",
+            orderType=main_order_type,
             qty=str(order_quantity),
             price=str(order_price),
             timeInForce="GTC",
             stopLoss=str(trade_info.stop_loss)
         )
-        # TODO if current price is within entry range, market order else limit
+
+        print(f"Asset: {trade_info.symbol}"
+              f"\nOrder quantity: {order_quantity}"
+              f"\nOrder price: {order_price}"
+              f"\nCurrent Price: {current_price}")
+        print("\n----------------------------------------------------------------------------------\n")
 
         print(f"Main order placed: \n{main_order}")
 
-        # Wait for the main order to be filled
+        # Wait for the main order to be filled before placing take profit orders
         order_id = main_order['result']['orderId']
         while True:
             try:
