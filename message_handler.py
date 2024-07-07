@@ -1,4 +1,4 @@
-from models.trade_info import TradeInfo
+from trade_info import TradeInfo
 
 
 class MessageHandler:

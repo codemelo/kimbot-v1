@@ -1,7 +1,7 @@
 import time
 from decimal import Decimal, ROUND_UP
 from pybit.unified_trading import HTTP
-from src.models.trade_info import TradeInfo
+from trade_info import TradeInfo
 
 
 class BybitClient:

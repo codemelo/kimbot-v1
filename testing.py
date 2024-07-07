@@ -2,7 +2,7 @@ import asyncio
 import os
 from dotenv import load_dotenv
 
-from src.models.trade_info import TradeInfo, TargetPoint
+from trade_info import TradeInfo
 from telegram_client import TelegramClient
 from bybit_client import BybitClient
 from message_handler import MessageHandler
