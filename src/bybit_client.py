@@ -1,6 +1,5 @@
 import time
 from decimal import Decimal, ROUND_UP
-
 from pybit.unified_trading import HTTP
 from src.models.trade_info import TradeInfo
 
@@ -94,7 +93,7 @@ class BybitClient:
               f"\nCurrent Price: {current_price}")
         print("\n----------------------------------------------------------------------------------\n")
 
-        print(f"Main order placed: \n{main_order}")
+        print(f"Main order placed by {main_order_type}: \n{main_order}")
 
         # Wait for the main order to be filled before placing take profit orders
         order_id = main_order['result']['orderId']

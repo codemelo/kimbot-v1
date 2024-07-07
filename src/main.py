@@ -11,7 +11,7 @@ async def main():
     # asyncio.run(filter_past_messages('INFORMATION'))
 
     load_dotenv()
-    bybit = setup_bybit()
+    bybit = setup_bybit_testnet()
     msg = MessageHandler(bybit)
     tg = await setup_telegram(msg)
 
@@ -21,6 +21,14 @@ async def main():
 def setup_bybit():
     bybit_api_key = os.getenv('BYBIT_API_KEY')
     bybit_api_secret = os.getenv('BYBIT_API_SECRET')
+
+    bybit = BybitClient(bybit_api_key, bybit_api_secret)
+    return bybit
+
+
+def setup_bybit_testnet():
+    bybit_api_key = os.getenv('BYBIT_API_KEY_TESTNET')
+    bybit_api_secret = os.getenv('BYBIT_API_SECRET_TESTNET')
 
     bybit = BybitClient(bybit_api_key, bybit_api_secret)
     return bybit

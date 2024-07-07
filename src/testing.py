@@ -35,8 +35,8 @@ async def main():
     # t.deposit_percentage = 10
     # t.entry_range = (53000.0, 59000.0)
     # t.add_target_point(57000, 50)
-    # t.add_target_point(56000, 25)
-    # t.add_target_point(55000, 25)
+    # t.add_target_point(56900, 25)
+    # t.add_target_point(56800, 25)
     # t.stop_loss = 60000.0
     #
     # print(bybit.get_current_price("BTCUSDT"))
