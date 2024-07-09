@@ -12,7 +12,6 @@ class BybitClient:
             api_secret=api_secret)
 
     def place_trade(self, trade_info: TradeInfo):
-
         try:
             current_leverage = self.get_current_leverage(trade_info.symbol)
         except Exception as e:
@@ -83,8 +82,7 @@ class BybitClient:
             orderType=main_order_type,
             qty=str(order_quantity),
             price=str(order_price),
-            timeInForce="GTC",
-            stopLoss=str(trade_info.stop_loss)
+            timeInForce="GTC"
         )
 
         print(f"Asset: {trade_info.symbol}"
@@ -95,7 +93,7 @@ class BybitClient:
 
         print(f"Main order placed by {main_order_type}: \n{main_order}")
 
-        # Wait for the main order to be filled before placing take profit orders
+        # Wait for the main order to be filled before setting stop loss and placing take profit orders
         order_id = main_order['result']['orderId']
         while True:
             try:
@@ -110,12 +108,14 @@ class BybitClient:
             except IndexError as e:
                 time.sleep(5)
 
-        # Determine order side for take profit
-        tp_side = None
+        # Determine order side for stop loss and take profits
+        sltp_side = None
         if order_side == "Buy":
-            tp_side = "Sell"
+            sltp_side = "Sell"
         elif order_side == "Sell":
-            tp_side = "Buy"
+            sltp_side = "Buy"
+
+        self.set_stop_loss(trade_info.symbol, sltp_side, order_quantity)
 
         total_tp_quantity = Decimal('0')
         tp_orders = []
@@ -146,7 +146,7 @@ class BybitClient:
                 tp_order = self.session.place_order(
                     category="linear",
                     symbol=trade_info.symbol,
-                    side=tp_side,
+                    side=sltp_side,
                     orderType="Limit",
                     qty=str(tp_quantity),
                     price=str(tp_price),
@@ -240,6 +240,39 @@ class BybitClient:
                 print(f"position closed: {position}")
         except Exception as e:
             print(f"Error occured when closing position for {symbol}: {e}")
+
+    def set_stop_loss(self, symbol, side, qty):
+        risk_factor = 0.877
+
+        position = self.session.get_positions(
+            category="linear",
+            symbol=symbol
+        )
+
+        entry_price = float(position['result']['list'][0]['avgPrice'])
+        liq_price = float(position['result']['list'][0]['liqPrice'])
+
+        # Calculate the price range
+        price_range = abs(entry_price - liq_price)
+
+        # Determine the direction of the trade (long or short)
+        is_long = liq_price < entry_price
+
+        # Calculate the stop loss price
+        if is_long:
+            stop_loss = entry_price - (price_range * risk_factor)
+        else:
+            stop_loss = entry_price + (price_range * risk_factor)
+
+        stop_loss = round(stop_loss, 2)  # Round to 2 decimal places
+
+        result = self.session.set_trading_stop(
+            category="linear",
+            symbol=symbol,
+            stopLoss=str(stop_loss),
+            positionIdx=0,
+            triggerBy="LastPrice"
+        )
 
     def get_opposite_side(self, side):
         if side == "Buy":

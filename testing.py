@@ -28,19 +28,19 @@ async def main():
     # trades = await backtest_past_messages(tg, msg)
     # check_validation(trades)
 
-    # t = TradeInfo()
-    # t.position_type = "SHORT"
-    # t.symbol = "BTCUSDT"
-    # t.leverage = 50
-    # t.deposit_percentage = 10
-    # t.entry_range = (53000.0, 59000.0)
-    # t.add_target_point(57000, 50)
-    # t.add_target_point(56900, 25)
-    # t.add_target_point(56800, 25)
-    # t.stop_loss = 60000.0
-    #
-    # #print(bybit.get_current_price("BTCUSDT"))
-    # bybit.place_trade(t)
+    t = TradeInfo()
+    t.position_type = "SHORT"
+    t.symbol = "BTCUSDT"
+    t.leverage = 50
+    t.deposit_percentage = 10
+    t.entry_range = (53000.0, 59000.0)
+    t.add_target_point(57000, 50)
+    t.add_target_point(56900, 25)
+    t.add_target_point(56800, 25)
+    t.stop_loss = 60000.0
+
+    #print(bybit.get_current_price("BTCUSDT"))
+    bybit.place_trade(t)
 
     # t = TradeInfo()
     # t.position_type = "LONG"
@@ -55,10 +55,10 @@ async def main():
     # t.add_target_point(3350, 12)
     # t.add_target_point(3400, 10)
     # t.stop_loss = 3000.0
-    #
-    # print(bybit.get_current_price("BTCUSDT"))
+    # #
+    # # print(bybit.get_current_price("BTCUSDT"))
     # bybit.place_trade(t)
-    bybit.close_position("BTCUSDT")
+    # #bybit.close_position("BTCUSDT")
 
 
 async def backtest_past_messages(tg, msg):
