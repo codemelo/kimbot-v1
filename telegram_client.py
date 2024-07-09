@@ -80,21 +80,3 @@ class TelegramClient:
                     print("Retrieved message...")
 
         return messages
-
-    # async def get_traded_symbols_from_channels(self):
-    #     errors = []
-    #     symbols = []
-    #     for c in self.channels:
-    #         async for m in self.client.iter_messages(c):
-    #             if m.message is not None and m.message.startswith('INFORMATION'):
-    #                 try:
-    #                     symbols.append(get_symbol_from_msg(m.message))
-    #                     print("symbol found")
-    #                 except Exception as e:
-    #                     errors.append(e)
-    #
-    #     if errors:
-    #         for e in errors:
-    #             print(e)
-    #
-    #     return list(set(symbols))
