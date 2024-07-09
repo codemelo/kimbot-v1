@@ -34,15 +34,19 @@ class TelegramClient:
             await self.client.sign_in(self.phone, auth_code)
 
     async def start_telegram_listener(self):
+        previous_msg = None
+
         while True:
             try:
                 await self.login_and_authorize()
 
                 @self.client.on(events.NewMessage(chats=self.channels))
                 async def handler(event):
-                    message = event.message.message
-                    self.msg.process_message(message)
-
+                    nonlocal previous_msg
+                    message_obj = event.message
+                    if message_obj.message != previous_msg:
+                        self.msg.process_message(message_obj)
+                    previous_msg = message_obj.message
                 print('Listening for new messages...')
                 await self.client.run_until_disconnected()
 
