@@ -43,10 +43,12 @@ class TelegramClient:
                 @self.client.on(events.NewMessage(chats=self.channels))
                 async def handler(event):
                     nonlocal previous_msg
-                    message_obj = event.message
-                    if message_obj.message != previous_msg:
-                        self.msg.process_message(message_obj)
-                    previous_msg = message_obj.message
+                    msg_obj = event.message
+                    if msg_obj.message != previous_msg:  # handle duplicates
+                        replied_msg_obj = await event.get_reply_message()
+                        self.msg.process_message(msg_obj, replied_msg_obj)
+                    previous_msg = msg_obj.message
+
                 print('Listening for new messages...')
                 await self.client.run_until_disconnected()
 

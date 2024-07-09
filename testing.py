@@ -39,25 +39,26 @@ async def main():
     # t.add_target_point(56800, 25)
     # t.stop_loss = 60000.0
     #
-    # print(bybit.get_current_price("BTCUSDT"))
+    # #print(bybit.get_current_price("BTCUSDT"))
     # bybit.place_trade(t)
 
-    t = TradeInfo()
-    t.position_type = "LONG"
-    t.symbol = "ETHUSDT"
-    t.leverage = 50
-    t.deposit_percentage = 10
-    t.entry_range = (2900.0, 3500.0)
-    t.add_target_point(3100, 20)
-    t.add_target_point(3150, 20)
-    t.add_target_point(3200, 24)
-    t.add_target_point(3300, 14)
-    t.add_target_point(3350, 12)
-    t.add_target_point(3400, 10)
-    t.stop_loss = 3000.0
-
+    # t = TradeInfo()
+    # t.position_type = "LONG"
+    # t.symbol = "ETHUSDT"
+    # t.leverage = 50
+    # t.deposit_percentage = 10
+    # t.entry_range = (2900.0, 3500.0)
+    # t.add_target_point(3100, 20)
+    # t.add_target_point(3150, 20)
+    # t.add_target_point(3200, 24)
+    # t.add_target_point(3300, 14)
+    # t.add_target_point(3350, 12)
+    # t.add_target_point(3400, 10)
+    # t.stop_loss = 3000.0
+    #
     # print(bybit.get_current_price("BTCUSDT"))
-    bybit.place_trade(t)
+    # bybit.place_trade(t)
+    bybit.close_position("BTCUSDT")
 
 
 async def backtest_past_messages(tg, msg):

@@ -5,20 +5,20 @@ class MessageHandler:
     def __init__(self, bybit_client):
         self.bybit = bybit_client
 
-    def process_message(self, msg_str):
-        if not msg_str.startswith('INFORMATION'):
-            print("INVALID MESSAGE")
-            return
-
-        trade_info = TradeInfo()
-        self._extract_main_info(msg_str, trade_info)
-        self._extract_entry_range(msg_str, trade_info)
-        self._extract_target_points(msg_str, trade_info)
-        self._extract_stop_loss(msg_str, trade_info)
-
-        self.bybit.place_trade(trade_info)
-
-        return trade_info
+    def process_message(self, msg_obj, reply_msg_obj):
+        msg_str = msg_obj.message.lower()
+        if msg_str.startswith("information"):
+            trade_info = TradeInfo()
+            self._extract_main_info(msg_str, trade_info)
+            self._extract_entry_range(msg_str, trade_info)
+            self._extract_target_points(msg_str, trade_info)
+            self._extract_stop_loss(msg_str, trade_info)
+            self.bybit.place_trade(trade_info)
+        elif reply_msg_obj is not None and "manually cancelled" in msg_str:
+            symbol = msg_str[1:msg_str.index('/')].upper() + 'USDT'
+            self.bybit.close_position(symbol)
+        else:
+            print("Message received but does not meet criteria.")
 
     def _extract_main_info(self, msg_str, trade_info):
         # Extract the substring starting from 'INFORMATION' to 'deposit'

@@ -220,3 +220,29 @@ class BybitClient:
                 matches.append(s)
 
         return matches
+
+    def close_position(self, symbol):
+        try:
+            result = self.session.get_positions(
+                category="linear",
+                symbol=symbol
+            )
+
+            if len(result['result']['list']) > 0:
+                position = result['result']['list'][0]
+                self.session.place_order(
+                    category="linear",
+                    symbol=symbol,
+                    side=str(self.get_opposite_side(position['side'])),
+                    orderType="Market",
+                    qty=str(position['size'])
+                )
+                print(f"position closed: {position}")
+        except Exception as e:
+            print(f"Error occured when closing position for {symbol}: {e}")
+
+    def get_opposite_side(self, side):
+        if side == "Buy":
+            return "Sell"
+        elif side == "Sell":
+            return "Buy"
