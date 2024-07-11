@@ -1,47 +1,47 @@
-from trade_info import TradeInfo
+from src.models.position import Position
 
 
 class MessageHandler:
-    def __init__(self, bybit_client):
+    def __init__(self, bybit_client=None):
         self.bybit = bybit_client
 
     def process_message(self, msg_obj, reply_msg_obj):
         msg_str = msg_obj.message
         if msg_str.startswith("INFORMATION"):
-            trade_info = TradeInfo()
-            self._extract_main_info(msg_str, trade_info)
-            self._extract_entry_range(msg_str, trade_info)
-            self._extract_target_points(msg_str, trade_info)
-            self._extract_stop_loss(msg_str, trade_info)
-            self.bybit.place_trade(trade_info)
+            position = Position()
+            self._extract_main_info(msg_str, position)
+            self._extract_entry_range(msg_str, position)
+            self._extract_target_points(msg_str, position)
+            self._extract_stop_loss(msg_str, position)
+            self.bybit.place_trade(position)
         elif reply_msg_obj is not None and "Manually Cancelled" in msg_str:
             symbol = msg_str[1:msg_str.index('/')].upper() + 'USDT'
             self.bybit.close_position(symbol)
         else:
             print("Message received but does not meet criteria.")
 
-    def _extract_main_info(self, msg_str, trade_info):
+    def _extract_main_info(self, msg_str, position):
         # Extract the substring starting from 'INFORMATION' to 'deposit'
         start = msg_str.find("INFORMATION")
         end = msg_str.find("deposit") + len("deposit")
         substring = msg_str[start:end]  # Extracted substring
         substrings = substring.split()  # Separate the substrings by using whitespace as the delimiter
 
-        trade_info.symbol = substrings[2]
+        position.symbol = substrings[2] + 'T'
         for i, s in enumerate(substrings):
             if s.upper() in ['SHORT', 'LONG']:
-                trade_info.position_type = s.upper()
+                position.side = s.upper()
             elif (0 < i < len(substrings) - 1
                   and substrings[i - 1].lower() == 'using' and substrings[i + 1].lower() == 'leverage'):
                 num_str = extract_num_str(s)
                 if num_str is not None and num_str in s:
-                    trade_info.leverage = num_str
+                    position.leverage = num_str
             elif '%' in s:
                 num_str = extract_num_str(s)
                 if num_str is not None and num_str in s:
-                    trade_info.deposit_percentage = num_str
+                    position.deposit_percentage = num_str
 
-    def _extract_entry_range(self, msg_str, trade_info):
+    def _extract_entry_range(self, msg_str, position):
         # Step 1: Find the start index of "ENTRY BETWEEN"
         start = msg_str.find("ENTRY BETWEEN")
 
@@ -55,12 +55,10 @@ class MessageHandler:
         entry_values_str = entry_between_str.split(":")[1].strip()
         entry_values_str = entry_values_str.replace("$", "").replace(" ", "")
         entry_values = entry_values_str.split("-")
-        entry_low = float(entry_values[0])
-        entry_high = float(entry_values[1])
+        position.entry_low = float(entry_values[0])
+        position.entry_high = float(entry_values[1])
 
-        trade_info.entry_range = (entry_low, entry_high)
-
-    def _extract_target_points(self, msg_str, trade_info):
+    def _extract_target_points(self, msg_str, position):
         # Step 1: Find the start index of "TARGET POINTS"
         start = msg_str.find("TARGET POINTS:")
 
@@ -82,9 +80,9 @@ class MessageHandler:
                 percentage_part = parts[1].split('-')[1].strip().replace("%", "")
                 price = float(price_part)
                 percentage = int(percentage_part)
-                trade_info.add_target_point(price, percentage)
+                position.add_target_point(price, percentage)
 
-    def _extract_stop_loss(self, msg_str, trade_info):
+    def _extract_stop_loss(self, msg_str, position):
         # Step 1: Find the start index of "STOP LOSS"
         start = msg_str.find("STOP LOSS:")
 
@@ -101,7 +99,7 @@ class MessageHandler:
         stop_loss_value_str = stop_loss_value_str.replace("$", "").replace(" ", "")
         stop_loss_value = float(stop_loss_value_str)
 
-        trade_info.stop_loss = stop_loss_value
+        position.stop_loss = stop_loss_value
 
 
 def extract_num_str(s):

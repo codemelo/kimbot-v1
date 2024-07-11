@@ -1,7 +1,8 @@
 import time
 from decimal import Decimal, ROUND_UP
 from pybit.unified_trading import HTTP
-from trade_info import TradeInfo
+from src.models.position import Position
+from utils import config
 
 
 class BybitClient:
@@ -11,64 +12,64 @@ class BybitClient:
             api_key=api_key,
             api_secret=api_secret)
 
-    def place_trade(self, trade_info: TradeInfo):
+    def place_trade(self, position: Position):
         try:
-            current_leverage = self.get_current_leverage(trade_info.symbol)
+            current_leverage = self.get_current_leverage(position.symbol)
         except Exception as e:
             print(f"Error getting current leverage: {e}")
             current_leverage = None
 
         # Set leverage only if it's different
-        if current_leverage is None or float(current_leverage) != trade_info.leverage:
-            leverage_str = str(trade_info.leverage)
+        if current_leverage is None or float(current_leverage) != float(position.leverage):
+            leverage_str = str(position.leverage)
             self.session.set_leverage(
                 category="linear",
-                symbol=trade_info.symbol,
+                symbol=position.symbol,
                 buyLeverage=leverage_str,
                 sellLeverage=leverage_str
             )
             print(f"Leverage set to {leverage_str}")
         else:
-            print(f"Leverage already set to {trade_info.leverage}")
+            print(f"Leverage already set to {position.leverage}")
 
         # Fetch instrument info to get qtyStep
         instrument_info = self.session.get_instruments_info(
             category="linear",
-            symbol=trade_info.symbol
+            symbol=position.symbol
         )
         qty_step = Decimal(instrument_info['result']['list'][0]['lotSizeFilter']['qtyStep'])
 
         # Calculate order value based on deposit percentage
         usdt_balance = Decimal(self.get_balance("USDT"))
-        order_value = usdt_balance * (Decimal(trade_info.deposit_percentage) / Decimal(100))
+        order_value = usdt_balance * (Decimal(config.DEPOSIT_PERCENTAGE) / Decimal(100))
 
         # Calculate the leveraged order value
-        leveraged_order_value = order_value * Decimal(trade_info.leverage)
+        leveraged_order_value = order_value * Decimal(position.leverage)
 
         # Calculate the raw quantity using the leveraged order value
-        current_price = Decimal(str(self.get_current_price(trade_info.symbol)))
+        current_price = Decimal(str(self.get_current_price(position.symbol)))
         raw_quantity = leveraged_order_value / current_price
 
         # Round down to the nearest multiple of qtyStep
         order_quantity = raw_quantity.quantize(qty_step, rounding=ROUND_UP)
 
         # Calculate the actual amount from balance being used
-        actual_balance_used = order_quantity * current_price / Decimal(trade_info.leverage)
+        actual_balance_used = order_quantity * current_price / Decimal(position.leverage)
 
         # Determine order side
         order_side = None
-        if trade_info.position_type == "LONG":
+        if position.side == "LONG":
             order_side = "Buy"
-        elif trade_info.position_type == "SHORT":
+        elif position.side == "SHORT":
             order_side = "Sell"
 
         # Determine order price based on current price and entry range
-        current_price = self.get_current_price(trade_info.symbol)
-        if current_price < trade_info.entry_low:
-            order_price = trade_info.entry_low
+        current_price = self.get_current_price(position.symbol)
+        if current_price < position.entry_low:
+            order_price = position.entry_low
             main_order_type = "Limit"
-        elif current_price > trade_info.entry_high:
-            order_price = trade_info.entry_high
+        elif current_price > position.entry_high:
+            order_price = position.entry_high
             main_order_type = "Limit"
         else:
             order_price = current_price
@@ -77,7 +78,7 @@ class BybitClient:
         # Place main order
         main_order = self.session.place_order(
             category="linear",
-            symbol=trade_info.symbol,
+            symbol=position.symbol,
             side=order_side,
             orderType=main_order_type,
             qty=str(order_quantity),
@@ -85,7 +86,7 @@ class BybitClient:
             timeInForce="GTC"
         )
 
-        print(f"Asset: {trade_info.symbol}"
+        print(f"Asset: {position.symbol}"
               f"\nOrder quantity: {order_quantity}"
               f"\nOrder price: {order_price}"
               f"\nCurrent Price: {current_price}")
@@ -99,7 +100,7 @@ class BybitClient:
             try:
                 order_status = self.session.get_order_history(
                     category="linear",
-                    symbol=trade_info.symbol,
+                    symbol=position.symbol,
                     orderId=order_id
                 )
                 if order_status['result']['list'][0]['orderStatus'] == 'Filled':
@@ -115,13 +116,13 @@ class BybitClient:
         elif order_side == "Sell":
             sltp_side = "Buy"
 
-        self.set_stop_loss(trade_info.symbol, sltp_side, order_quantity)
+        self.set_stop_loss(position.symbol, sltp_side, order_quantity)
 
         total_tp_quantity = Decimal('0')
         tp_orders = []
 
-        for i, tp in enumerate(trade_info.target_points):
-            tp_quantity = order_quantity * (Decimal(tp.percentage) / Decimal(100))
+        for i, tp in enumerate(position.target_points):
+            tp_quantity = order_quantity * (Decimal(tp.margin_percentage) / Decimal(100))
             tp_quantity = tp_quantity.quantize(qty_step, rounding=ROUND_UP)
 
             if tp_quantity > Decimal('0'):
@@ -145,7 +146,7 @@ class BybitClient:
             if tp_quantity > Decimal('0'):
                 tp_order = self.session.place_order(
                     category="linear",
-                    symbol=trade_info.symbol,
+                    symbol=position.symbol,
                     side=sltp_side,
                     orderType="Limit",
                     qty=str(tp_quantity),
@@ -242,8 +243,6 @@ class BybitClient:
             print(f"Error occured when closing position for {symbol}: {e}")
 
     def set_stop_loss(self, symbol, side, qty):
-        risk_factor = 0.877
-
         position = self.session.get_positions(
             category="linear",
             symbol=symbol
@@ -260,9 +259,9 @@ class BybitClient:
 
         # Calculate the stop loss price
         if is_long:
-            stop_loss = entry_price - (price_range * risk_factor)
+            stop_loss = entry_price - (price_range * config.SL_RISK_FACTOR)
         else:
-            stop_loss = entry_price + (price_range * risk_factor)
+            stop_loss = entry_price + (price_range * config.SL_RISK_FACTOR)
 
         stop_loss = round(stop_loss, 2)  # Round to 2 decimal places
 

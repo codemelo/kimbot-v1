@@ -2,10 +2,10 @@ import asyncio
 import os
 from dotenv import load_dotenv
 
-from trade_info import TradeInfo
-from telegram_client import TelegramClient
-from bybit_client import BybitClient
-from message_handler import MessageHandler
+from src.models.position import Position
+from src.services.telegram_client import TelegramClient
+from src.services.bybit_client import BybitClient
+from src.services.message_handler import MessageHandler
 
 
 async def main():
@@ -28,8 +28,8 @@ async def main():
     # trades = await backtest_past_messages(tg, msg)
     # check_validation(trades)
 
-    t = TradeInfo()
-    t.position_type = "LONG"
+    t = Position()
+    t.side = "LONG"
     t.symbol = "BTCUSDT"
     t.leverage = 50
     t.deposit_percentage = 10
@@ -62,7 +62,7 @@ async def main():
 
 
 async def backtest_past_messages(tg, msg):
-    messages = await tg.get_past_messages("INFORMATION")
+    messages = await tg.get_past_messages_starting_with("INFORMATION")
     trades = []
     errors = []
     for m in messages:
@@ -98,7 +98,7 @@ async def setup_telegram(message_handler):
     tg = TelegramClient(tg_api_id, tg_api_hash, phone_number, message_handler)
     channel_ids = os.getenv('TELEGRAM_CHANNEL_IDS').split(',')  # Split comma-separated channel IDs
     channel_ids = [int(channel_id) for channel_id in channel_ids]  # Convert to list of integers
-    await tg.set_channels_by_id(channel_ids)
+    await tg.set_channels(channel_ids)
     return tg
 
 
@@ -106,8 +106,8 @@ def check_validation(trades):
     errors = []
 
     for i, trade in enumerate(trades):
-        if trade.position_type not in ["LONG", "SHORT"]:
-            errors.append(f"Trade {i}: Invalid position_type '{trade.position_type}'. Must be 'LONG' or 'SHORT'.")
+        if trade.side not in ["LONG", "SHORT"]:
+            errors.append(f"Trade {i}: Invalid position_type '{trade.side}'. Must be 'LONG' or 'SHORT'.")
         if not isinstance(trade.deposit_percentage, (int, float)) or not (0 < trade.deposit_percentage <= 10):
             errors.append(
                 f"Trade {i}: Invalid deposit_percentage '{trade.deposit_percentage}'. Must be a positive int or float no larger than 10.")
