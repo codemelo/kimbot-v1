@@ -1,11 +1,11 @@
-from src.models.position import Position
+from src.models import Position
 
 
 class MessageHandler:
     def __init__(self, bybit_client=None):
         self.bybit = bybit_client
 
-    def process_message(self, msg_obj, reply_msg_obj):
+    def process_message(self, msg_obj, reply_msg_obj=None):
         msg_str = msg_obj.message
         if msg_str.startswith("INFORMATION"):
             position = Position()
@@ -13,10 +13,11 @@ class MessageHandler:
             self._extract_entry_range(msg_str, position)
             self._extract_target_points(msg_str, position)
             self._extract_stop_loss(msg_str, position)
-            self.bybit.place_trade(position)
-        elif reply_msg_obj is not None and "Manually Cancelled" in msg_str:
-            symbol = msg_str[1:msg_str.index('/')].upper() + 'USDT'
-            self.bybit.close_position(symbol)
+            return position
+            # self.bybit.place_trade(position)
+        # elif reply_msg_obj is not None and "Manually Cancelled" in msg_str:
+        #     symbol = msg_str[1:msg_str.index('/')].upper() + 'USDT'
+        #     self.bybit.close_position(symbol)
         else:
             print("Message received but does not meet criteria.")
 

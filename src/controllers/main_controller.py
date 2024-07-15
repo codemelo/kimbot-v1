@@ -12,7 +12,7 @@ class MainController:
         self.tg = None
 
     async def initialize(self):
-        # self.data = DataManager()
+        self.data = DataManager()
         # self.bybit = BybitClient(config.BYBIT_API_KEY, config.BYBIT_API_SECRET)
         self.bybit = BybitClient(config.BYBIT_API_KEY_TESTNET, config.BYBIT_API_SECRET_TESTNET)
         self.msg = MessageHandler(self.bybit)
@@ -29,3 +29,5 @@ class MainController:
 
     async def start_telegram_listener(self):
         await self.tg.start_telegram_listener()
+
+

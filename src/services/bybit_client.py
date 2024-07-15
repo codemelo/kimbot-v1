@@ -1,7 +1,7 @@
 import time
 from decimal import Decimal, ROUND_UP
 from pybit.unified_trading import HTTP
-from src.models.position import Position
+from src.models import Position
 from utils import config
 
 

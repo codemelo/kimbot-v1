@@ -76,7 +76,7 @@ class TelegramClient:
         for c in self.channels:
             async for m in self.client.iter_messages(c):
                 if m.message is not None and m.message.startswith(startswith_str):
-                    messages.append(m.message)
+                    messages.append(m)
                     print("Retrieved message...")
 
         return messages

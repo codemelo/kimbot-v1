@@ -1,5 +1,3 @@
-from .base import Base
-from .position import Position
-from .target_point import TargetPoint
+from .models import Position, TargetPoint
 
-__all__ = ['Base', 'Position', 'TargetPoint']
+__all__ = ['Position', 'TargetPoint']
