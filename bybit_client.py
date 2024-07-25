@@ -1,8 +1,7 @@
 import time
 from decimal import Decimal, ROUND_UP
 from pybit.unified_trading import HTTP
-from src.models import Position
-from utils import config
+import config
 
 
 class BybitClient:
@@ -12,7 +11,8 @@ class BybitClient:
             api_key=api_key,
             api_secret=api_secret)
 
-    def place_trade(self, position: Position):
+    def place_trade(self, position):
+        position.symbol = self.validate_symbol(position.symbol)
         try:
             current_leverage = self.get_current_leverage(position.symbol)
         except Exception as e:
@@ -122,7 +122,7 @@ class BybitClient:
         tp_orders = []
 
         for i, tp in enumerate(position.target_points):
-            tp_quantity = order_quantity * (Decimal(tp.margin_percentage) / Decimal(100))
+            tp_quantity = order_quantity * (Decimal(tp.percentage) / Decimal(100))
             tp_quantity = tp_quantity.quantize(qty_step, rounding=ROUND_UP)
 
             if tp_quantity > Decimal('0'):
@@ -278,3 +278,7 @@ class BybitClient:
             return "Sell"
         elif side == "Sell":
             return "Buy"
+
+    def validate_symbol(self, symbol):
+        if symbol.endswith("USD"):
+            return symbol + 'T'

@@ -3,10 +3,10 @@ import asyncio
 
 
 class TelegramClient:
-    def __init__(self, api_id, api_hash, phone_number, message_handler):
+    def __init__(self, api_id, api_hash, phone_number, message_controller):
         self.client = TelethonClient('tg-session', api_id, api_hash)
         self.phone = phone_number
-        self.msg = message_handler
+        self.mc = message_controller
         self.channels = None
 
     async def set_channels(self, channel_ids):
@@ -44,10 +44,9 @@ class TelegramClient:
                 async def handler(event):
                     nonlocal previous_msg
                     msg_obj = event.message
-                    if msg_obj.message != previous_msg:  # handle duplicates
-                        replied_msg_obj = await event.get_reply_message()
-                        self.msg.process_message(msg_obj, replied_msg_obj)
-                    previous_msg = msg_obj.message
+                    if msg_obj.raw_text != previous_msg:  # handle duplicates
+                        self.mc.process_message(msg_obj)
+                    previous_msg = msg_obj.raw_text
 
                 print('Listening for new messages...')
                 await self.client.run_until_disconnected()
@@ -75,7 +74,7 @@ class TelegramClient:
         # Get past messages for each channel
         for c in self.channels:
             async for m in self.client.iter_messages(c):
-                if m.message is not None and m.message.startswith(startswith_str):
+                if m.raw_text is not None and m.raw_text.startswith(startswith_str):
                     messages.append(m)
                     print("Retrieved message...")
 

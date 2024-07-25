@@ -1,0 +1,34 @@
+INFORMATION: SHORT BTCUSD on Bybit exchange using X50 Leverage with 10% of your deposit
+
+ENTRY BETWEEN: 63592 - 66052
+
+TARGET POINTS:
+
+1) $63375 - 20%
+2) $63317 - 20%
+3) $63212 - 24%
+4) $63001 - 14%
+5) $62739 - 12%
+6) $62476 - 10%
+
+STOP LOSS: $66971
+
+
+
+
+
+
+INFORMATION: SHORT ETHUSD on Bybit exchange using X50 Leverage with 10% of your deposit
+
+ENTRY BETWEEN: 3000.9 - 3481.2
+
+TARGET POINTS:
+
+1) $3046.6 - 20%
+2) $2942.4 - 20%
+3) $2936.9 - 24%
+4) $2925.8 - 14%
+5) $2912 - 12%
+6) $2900.1 - 10%
+
+STOP LOSS: $3529.6
